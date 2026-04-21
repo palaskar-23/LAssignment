@@ -1,7 +1,4 @@
-// pmpt_69dec010f07c8190b75fb7a88aaefef503cd17ce546ab745x
 const API_URL = "https://t5b7afa1l6.execute-api.us-east-1.amazonaws.com/default/bhargavfunc";
-
-// Toggle chat window open/closed
 function toggleChat() {
   const frame = document.getElementById("chat-frame");
   if (frame.style.display === "none" || frame.style.display === "") {
