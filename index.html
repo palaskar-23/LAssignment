@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,6 +11,363 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="styles.css">
+
+    <style>
+        /* ===================================
+           CHAT WIDGET STYLES
+           =================================== */
+
+        /* Floating button */
+        #chat-toggle-btn {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.45);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        #chat-toggle-btn:hover {
+            transform: scale(1.1) translateY(-2px);
+            box-shadow: 0 8px 28px rgba(99, 102, 241, 0.55);
+        }
+
+        #chat-toggle-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* Icon swap via classes */
+        #chat-toggle-btn .icon-chat,
+        #chat-toggle-btn .icon-close {
+            position: absolute;
+            transition: opacity 0.2s ease, transform 0.25s ease;
+        }
+
+        #chat-toggle-btn .icon-close {
+            opacity: 0;
+            transform: rotate(-90deg);
+        }
+
+        #chat-toggle-btn.open .icon-chat {
+            opacity: 0;
+            transform: rotate(90deg);
+        }
+
+        #chat-toggle-btn.open .icon-close {
+            opacity: 1;
+            transform: rotate(0deg);
+        }
+
+        /* Pulse ring on button */
+        #chat-toggle-btn::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: rgba(99, 102, 241, 0.25);
+            animation: pulse-ring 2.5s ease-out infinite;
+        }
+
+        @keyframes pulse-ring {
+            0%   { transform: scale(1);   opacity: 0.6; }
+            70%  { transform: scale(1.35); opacity: 0; }
+            100% { transform: scale(1.35); opacity: 0; }
+        }
+
+        /* Chat dialog */
+        #chat-frame {
+            position: fixed;
+            bottom: 102px;
+            right: 28px;
+            width: 370px;
+            max-height: 520px;
+            background: #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 16px 48px rgba(30, 27, 75, 0.18), 0 2px 8px rgba(99,102,241,0.08);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 9998;
+            transform: translateY(12px) scale(0.97);
+            opacity: 0;
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        opacity 0.22s ease;
+        }
+
+        #chat-frame.visible {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Run the enter animation after display:flex is applied */
+        #chat-frame.animate-in {
+            animation: chat-pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes chat-pop-in {
+            from { opacity: 0; transform: translateY(16px) scale(0.95); }
+            to   { opacity: 1; transform: translateY(0)    scale(1); }
+        }
+
+        /* Header */
+        #chat-header {
+            background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        #chat-header .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        #chat-header .header-text {
+            flex: 1;
+        }
+
+        #chat-header .header-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.2;
+        }
+
+        #chat-header .header-subtitle {
+            font-size: 11.5px;
+            color: rgba(255,255,255,0.8);
+            margin-top: 1px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.35);
+            flex-shrink: 0;
+        }
+
+        /* Messages area */
+        #chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #f9fafb;
+            min-height: 0;
+        }
+
+        #chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        #chat-messages::-webkit-scrollbar-track { background: transparent; }
+        #chat-messages::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+
+        /* Welcome message */
+        .chat-welcome {
+            text-align: center;
+            padding: 12px 8px 4px;
+        }
+
+        .chat-welcome .welcome-icon {
+            font-size: 32px;
+            margin-bottom: 6px;
+        }
+
+        .chat-welcome p {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        /* Message bubbles */
+        .msg-user,
+        .msg-assistant {
+            max-width: 82%;
+            padding: 9px 13px;
+            border-radius: 14px;
+            font-size: 13.5px;
+            line-height: 1.5;
+            word-break: break-word;
+            animation: msg-appear 0.2s ease;
+        }
+
+        @keyframes msg-appear {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            color: #ffffff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-assistant {
+            align-self: flex-start;
+            background: #ffffff;
+            color: #1f2937;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+        }
+
+        /* Typing dots */
+        .msg-assistant.thinking {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 12px 14px;
+        }
+
+        .thinking-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #9ca3af;
+            animation: bounce-dot 1.2s ease infinite;
+        }
+
+        .thinking-dot:nth-child(2) { animation-delay: 0.18s; }
+        .thinking-dot:nth-child(3) { animation-delay: 0.36s; }
+
+        @keyframes bounce-dot {
+            0%, 60%, 100% { transform: translateY(0); }
+            30%            { transform: translateY(-6px); }
+        }
+
+        /* Suggestion chips */
+        .suggestion-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 2px 0 4px;
+        }
+
+        .chip {
+            background: #ede9fe;
+            color: #4f46e5;
+            border: 1px solid #c4b5fd;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.18s ease, transform 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .chip:hover {
+            background: #6366f1;
+            color: #fff;
+            border-color: #6366f1;
+            transform: translateY(-1px);
+        }
+
+        /* Input row */
+        #chat-input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 12px;
+            background: #ffffff;
+            border-top: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+
+        #chat-input {
+            flex: 1;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 22px;
+            padding: 9px 15px;
+            font-size: 13.5px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            color: #1f2937;
+            background: #f9fafb;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #chat-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+            background: #fff;
+        }
+
+        #chat-input::placeholder {
+            color: #9ca3af;
+        }
+
+        #chat-send-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.3);
+        }
+
+        #chat-send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 14px rgba(99,102,241,0.4);
+        }
+
+        #chat-send-btn:active {
+            transform: scale(0.95);
+        }
+
+        #chat-send-btn svg {
+            width: 17px;
+            height: 17px;
+            fill: #fff;
+            margin-left: 2px;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 480px) {
+            #chat-frame {
+                width: calc(100vw - 24px);
+                right: 12px;
+                bottom: 90px;
+            }
+            #chat-toggle-btn {
+                right: 16px;
+                bottom: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
     
@@ -186,25 +542,21 @@
                 
                 <form action="#" method="POST" class="contact-form">
                     
-                    <!-- Text Input -->
                     <div class="form-group">
                         <label for="name">Full Name:</label>
                         <input type="text" id="name" name="name" placeholder="Enter your name" required>
                     </div>
                     
-                    <!-- Email Input -->
                     <div class="form-group">
                         <label for="email">Email Address:</label>
                         <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
                     </div>
                     
-                    <!-- Phone Input -->
                     <div class="form-group">
                         <label for="phone">Phone Number:</label>
                         <input type="tel" id="phone" name="phone" placeholder="123-456-7890">
                     </div>
                     
-                    <!-- Select Dropdown -->
                     <div class="form-group">
                         <label for="subject">Subject:</label>
                         <select id="subject" name="subject" required>
@@ -216,7 +568,6 @@
                         </select>
                     </div>
                     
-                    <!-- Radio Buttons -->
                     <div class="form-group">
                         <label>Preferred Contact Method:</label>
                         <div class="radio-group">
@@ -231,7 +582,6 @@
                         </div>
                     </div>
                     
-                    <!-- Checkboxes -->
                     <div class="form-group">
                         <label>Areas of Interest:</label>
                         <div class="checkbox-group">
@@ -250,25 +600,21 @@
                         </div>
                     </div>
                     
-                    <!-- Textarea -->
                     <div class="form-group">
                         <label for="message">Message:</label>
                         <textarea id="message" name="message" rows="6" placeholder="Write your message here..." required></textarea>
                     </div>
                     
-                    <!-- Number Input -->
                     <div class="form-group">
                         <label for="budget">Project Budget (USD):</label>
                         <input type="number" id="budget" name="budget" min="0" step="100" placeholder="5000">
                     </div>
                     
-                    <!-- Date Input -->
                     <div class="form-group">
                         <label for="deadline">Preferred Start Date:</label>
                         <input type="date" id="deadline" name="deadline">
                     </div>
                     
-                    <!-- Submit Button -->
                     <div class="form-group">
                         <button type="submit" class="submit-btn">Send Message</button>
                         <button type="reset" class="reset-btn">Clear Form</button>
@@ -292,6 +638,182 @@
             </ul>
         </div>
     </footer>
+
+    <!-- ===========================
+         CHAT WIDGET
+         =========================== -->
+
+    <!-- Floating toggle button -->
+    <button id="chat-toggle-btn" aria-label="Chat with my resume" title="Chat with Bhargav's resume">
+        <!-- Chat icon -->
+        <svg class="icon-chat" xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <!-- Close icon -->
+        <svg class="icon-close" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+    </button>
+
+    <!-- Chat dialog -->
+    <div id="chat-frame" role="dialog" aria-label="Resume chat">
+
+        <!-- Header -->
+        <div id="chat-header">
+            <div class="avatar">🤖</div>
+            <div class="header-text">
+                <div class="header-name">Chat with Bhargav</div>
+                <div class="header-subtitle">Ask me anything about my resume</div>
+            </div>
+            <div class="status-dot" title="Online"></div>
+        </div>
+
+        <!-- Messages -->
+        <div id="chat-messages">
+            <div class="chat-welcome">
+                <div class="welcome-icon">👋</div>
+                <p>Hi there! I'm Bhargav's AI assistant.<br>Ask me anything about his experience, skills, or projects.</p>
+            </div>
+            <div class="suggestion-chips">
+                <span class="chip" onclick="sendChip(this)">What are your skills?</span>
+                <span class="chip" onclick="sendChip(this)">Tell me about your experience</span>
+                <span class="chip" onclick="sendChip(this)">What projects have you built?</span>
+                <span class="chip" onclick="sendChip(this)">Are you open to work?</span>
+            </div>
+        </div>
+
+        <!-- Input row -->
+        <div id="chat-input-row">
+            <input type="text" id="chat-input" placeholder="Ask about my resume…" autocomplete="off" aria-label="Type your question">
+            <button id="chat-send-btn" aria-label="Send message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ===========================
+        // CHAT WIDGET LOGIC
+        // ===========================
+
+        const API_URL = "https://t5b7afa1l6.execute-api.us-east-1.amazonaws.com/default/bhargavfunc";
+
+        const toggleBtn   = document.getElementById("chat-toggle-btn");
+        const chatFrame   = document.getElementById("chat-frame");
+        const messagesDiv = document.getElementById("chat-messages");
+        const chatInput   = document.getElementById("chat-input");
+        const sendBtn     = document.getElementById("chat-send-btn");
+
+        let isOpen = false;
+
+        // Toggle open / close
+        function toggleChat() {
+            isOpen = !isOpen;
+            toggleBtn.classList.toggle("open", isOpen);
+
+            if (isOpen) {
+                chatFrame.style.display = "flex";
+                // Trigger animation on next frame
+                requestAnimationFrame(() => {
+                    chatFrame.classList.add("animate-in");
+                    chatFrame.style.opacity = "1";
+                    chatFrame.style.transform = "translateY(0) scale(1)";
+                });
+                chatInput.focus();
+            } else {
+                chatFrame.style.opacity = "0";
+                chatFrame.style.transform = "translateY(12px) scale(0.97)";
+                setTimeout(() => {
+                    chatFrame.style.display = "none";
+                    chatFrame.classList.remove("animate-in");
+                }, 240);
+            }
+        }
+
+        toggleBtn.addEventListener("click", toggleChat);
+
+        // Send via chip
+        function sendChip(el) {
+            chatInput.value = el.textContent;
+            sendMessage();
+        }
+
+        // Send message
+        async function sendMessage() {
+            const query = chatInput.value.trim();
+            if (!query) return;
+
+            chatInput.value = "";
+
+            // Remove chips after first message
+            const chips = messagesDiv.querySelector(".suggestion-chips");
+            if (chips) chips.remove();
+
+            appendMessage("user", query);
+            const thinkingEl = appendThinking();
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: query }),
+                });
+                const data = await res.json();
+                thinkingEl.remove();
+                appendMessage("assistant", data.reply || "Sorry, I couldn't get a response.");
+            } catch (err) {
+                thinkingEl.remove();
+                appendMessage("assistant", "Error connecting to the server. Please try again.");
+                console.error("Chat error:", err);
+            }
+        }
+
+        function appendMessage(role, text) {
+            const div = document.createElement("div");
+            div.className = role === "user" ? "msg-user" : "msg-assistant";
+            div.textContent = text;
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            return div;
+        }
+
+        function appendThinking() {
+            const div = document.createElement("div");
+            div.className = "msg-assistant thinking";
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement("span");
+                dot.className = "thinking-dot";
+                div.appendChild(dot);
+            }
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            return div;
+        }
+
+        // Send on button click
+        sendBtn.addEventListener("click", sendMessage);
+
+        // Send on Enter
+        chatInput.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        // ===========================
+        // SMOOTH SCROLL (nav links)
+        // ===========================
+        document.querySelectorAll('a[href^="#"]').forEach((link) => {
+            link.addEventListener("click", function (e) {
+                const target = document.querySelector(this.getAttribute("href"));
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: "smooth" });
+                }
+            });
+        });
+    </script>
 
 </body>
 </html>
