@@ -1,1 +1,0 @@
-const OpenAI_API_KEY = "sk-fakekeyABCDEF1234567890"
