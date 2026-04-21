@@ -1,0 +1,54 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-audit:
+    name: Check for hardcoded secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: 
+          fetch-depth: 0
+
+      - name: Install GitLeaks
+        run: |
+          wget https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz
+          tar -xvf gitleaks_8.18.2_linux_x64.tar.gz
+          sudo mv gitleaks /usr/local/bin/
+
+      - name: Run GitLeaks secret scan
+        run: gitleaks detect --source . --verbose
+
+  dependency-audit:
+      name: Check for vulnerable dependencies
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+          with: 
+            fetch-depth: 0
+
+        - name: Set up Node.js
+          uses: actions/setup-node@v3
+          with:
+            node-version: '20'
+
+        - name: Install dependencies
+          run: |
+            if [ -f package.json ]; then
+              npm ci
+            else
+              echo "No package.json found - skipping npm install"
+            fi
+
+        - name: Run npm audit
+          run: |
+            if [ -f package.json ]; then
+              npm audit --audit-level=high
+            else
+              echo "No package.json found - skipping audit"
+            fi
