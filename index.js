@@ -1,0 +1,1 @@
+const OpenAI_API_KEY = "AIzaSyBPEgT9EWhZjDXVWRMgOZ1Bf9TRL0TpcRw"
