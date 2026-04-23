@@ -2,7 +2,7 @@
         // CHAT WIDGET LOGIC
         // ===========================
 
-        const API_URL = "https://fo3n80hg87.execute-api.us-east-1.amazonaws.com/default/bhargavfunc";
+        const API_URL = "https://588wzhpgm6.execute-api.us-east-1.amazonaws.com/bhargavfunc";
 
         const toggleBtn   = document.getElementById("chat-toggle-btn");
         const chatFrame   = document.getElementById("chat-frame");
