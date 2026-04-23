@@ -1,4 +1,4 @@
-const API_URL = "https://t5b7afa1l6.execute-api.us-east-1.amazonaws.com/default/bhargavfunc";
+const API_URL = "https://fo3n80hg87.execute-api.us-east-1.amazonaws.com/default/bhargavfunc";
 function toggleChat() {
   const frame = document.getElementById("chat-frame");
   if (frame.style.display === "none" || frame.style.display === "") {
